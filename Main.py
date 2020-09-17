@@ -1,5 +1,5 @@
 import fitz
-
+from math import ceil
 
 filename = 'ignore/soci.pdf'
 doc = fitz.open(filename)
@@ -73,7 +73,7 @@ def get_page_counts(outline_structure):
         if val > 0:
             outline_structure[val - 1].append(outline_structure[val][1] - outline_structure [val - 1][1])
 
-    del outline_structure[-1]
+    del outline_structure[-1]  # We got one extra heading in order to do page count so remove it
     return outline_structure
 
 
@@ -83,19 +83,18 @@ def partition_outline(outline_structure, days):
     total_pages = 0
     for item in outline_structure:
         total_pages += item[3]
-    pages_per_day = total_pages / days
+    pages_per_day = ceil(total_pages / days)
     print(pages_per_day)
     count = 0
     for item in outline_structure:
         print(item)
         if (count + item[3]) <= pages_per_day:
             count += item[3]
-            buffer.append(item)
+            buffer.append(item[3])
         else:
-
             output.append(buffer)
-            count = 0
-            buffer = []
+            buffer = [item[3]]
+            count = item[3]
 
     if len(buffer) != 0:
         output.append(buffer)
@@ -104,9 +103,10 @@ def partition_outline(outline_structure, days):
 
 
 structure = get_page_counts(get_parent_tree(get_outline_structure(ol), 198))
-
+structure.pop(-1)
+structure.pop(-1)
 for val in partition_outline(structure, 5):
-    print(val)
+     print(val)
 
 
 
