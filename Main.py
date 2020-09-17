@@ -33,31 +33,9 @@ def get_outline_structure(outline, level=0):
     while outline is not None:
         temp = [level, outline.page, outline.title]
         output.append(temp)
-        #output.append(prefix + " " + str(outline.page) + " " + outline.title)
         if outline.down is not None:
             output.extend(get_outline_structure(outline.down, level + 1))
         outline = outline.next
-    return output
-
-
-def get_outline_range(outline_structure, min_page, max_page):
-    """
-    Gets the outline structure of a specific page range.
-    min_page and max_page is the page number based on the table of contents
-    of the PDF
-
-    :param outline_structure: List of the outline contents
-    :param min_page: minimum page to be selected
-    :param max_page: maximum page to be selected
-    :return:
-    """
-    min_page = get_internal_page(min_page)
-    max_page = get_internal_page(max_page)
-
-    output = []
-    for item in outline_structure:
-        if min_page <= item[1] <= max_page:
-            output.append(item)
     return output
 
 
@@ -89,6 +67,7 @@ def get_parent_tree(outline_structure, start):
 
     return output
 
+
 def get_page_counts(outline_structure):
     for val in range(0, len(outline_structure)):
         if val > 0:
@@ -97,12 +76,6 @@ def get_page_counts(outline_structure):
     del outline_structure[-1]
     return outline_structure
 
-
-
-structure = get_page_counts(get_parent_tree(get_outline_structure(ol), 198))
-
-# for val in structure:
-#     print(val[2] + " [" + str(val[3]) + "p]")
 
 def partition_outline(outline_structure, days):
     output = []
@@ -124,19 +97,17 @@ def partition_outline(outline_structure, days):
             count = 0
             buffer = []
 
-
     if len(buffer) != 0:
         output.append(buffer)
 
     return output
 
+
+structure = get_page_counts(get_parent_tree(get_outline_structure(ol), 198))
+
 for val in partition_outline(structure, 5):
     print(val)
 
 
-#
-# print("---------")
-# for val in range(0, len(structure)):
-#      print(str(structure[val][0]) + " " + str(structure[val][1] - beginning_offset + 1) + " " + str(structure[val][2]) + " " + str(structure[val][3]))
 
 
