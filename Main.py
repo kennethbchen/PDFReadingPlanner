@@ -90,10 +90,10 @@ def partition_outline(outline_structure, days):
         print(item)
         if (count + item[3]) <= pages_per_day:
             count += item[3]
-            buffer.append(item[3])
+            buffer.append(item)
         else:
             output.append(buffer)
-            buffer = [item[3]]
+            buffer = [item]
             count = item[3]
 
     if len(buffer) != 0:
@@ -105,9 +105,9 @@ def partition_outline(outline_structure, days):
 structure = get_page_counts(get_parent_tree(get_outline_structure(ol), 198))
 structure.pop(-1)
 structure.pop(-1)
+
 for val in partition_outline(structure, 5):
      print(val)
-
 
 
 
