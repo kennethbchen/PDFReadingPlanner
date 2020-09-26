@@ -1,5 +1,6 @@
 import fitz
 from math import ceil
+import tkinter
 
 
 def get_outline_structure(outline, level=0):
@@ -78,25 +79,39 @@ def partition_outline(outline_structure, days):
 
     if len(buffer) != 0:
         output.append(buffer)
-
+    output = sift(output, days, pages_per_day)
     return pages_per_day, output
+
+
+def sift(reading_plan, days, pages_per_day):
+
+    if len(reading_plan) > days:
+        reading_plan[-2].extend(reading_plan.pop(-1))
+
+    return reading_plan
 
 
 def generate_plan(document, toc_start_page, days, toc_offset=0, trim_by=0):
     ol = document.outline
     headings = get_page_counts(get_parent_tree(get_outline_structure(ol), toc_start_page + toc_offset))
-    for i in range(0,trim_by):
+    for i in range(0, trim_by):
         headings.pop(-1)
 
     pages_per_day, partition = partition_outline(headings, days)
+
     return pages_per_day, partition
 
 
 filename = 'ignore/soci.pdf'
 doc = fitz.open(filename)
 
-rate, plan = generate_plan(doc, 250, 5, 41, 2)
+rate, plan = generate_plan(doc, 250, 5, 41, 2) #294
 
-print(rate)
+print("Pages/Day: " + str(rate))
 for val in plan:
-    print(val)
+
+    for item in val:
+        for count in range(0, item[0]):
+            print("\t", end='')
+        print(item[2] + " [" + str(item[1]) + "; " + str(item[3]) + "p]\r")
+    print("----------------------------------------------------------")
