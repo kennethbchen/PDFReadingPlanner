@@ -81,15 +81,29 @@ def partition_outline(page_counts, pages_per_day):
     return output
 
 
-def slice_page_counts(partition, page_counts):
+# def slice_page_counts(partition, page_counts): TODO Fix this
+#     output = []
+#     for item in partition:
+#         output.append(page_counts[:item])
+#         del page_counts[:item]
+#     return output
+
+
+def assemble_plan(partition, section_levels, section_titles, section_start_pages, section_page_counts):
     output = []
-    for item in partition:
-        output.append(page_counts[:item])
-        del page_counts[:item]
+
+    slice_start = 0
+    for i in range(0, len(partition)):
+        temp = []
+        for j in range(slice_start, slice_start + partition[i]):
+            temp_section = [section_levels[j], section_titles[j], section_start_pages[j], section_page_counts[j]]
+            temp.append(temp_section)
+        output.append(temp)
+        slice_start += partition[i]
     return output
 
 
-def generate_plan(document, toc_start_page, days, toc_offset=0, trim_by=0):
+def generate_plan(document, toc_start_page, days, toc_offset=0, trim_by=0, debug=False):
     ol = document.outline
 
     # Get only the headings that we want
@@ -97,38 +111,39 @@ def generate_plan(document, toc_start_page, days, toc_offset=0, trim_by=0):
     for i in range(1, trim_by):  # Remove a certain number of the headings from the back
         headings.pop(-1)  # TODO Check this to make sure outlines are being selected properly, chapter 8 was in headings
 
-    levels, heading_start_pages, section_titles = zip(*headings)
-    print("levels:", levels)
-    print("section bookmarks:", heading_start_pages)
-    print("section titles:", section_titles)
+    levels, section_start_pages, section_titles = zip(*headings)
 
-    section_page_counts = get_page_counts(heading_start_pages)
-    print("section page counts", section_page_counts)
+    section_page_counts = get_page_counts(section_start_pages)
 
     pages_per_day = ceil(sum(section_page_counts) / days)
-    print("ppd", pages_per_day)
 
     partition = partition_outline(section_page_counts, pages_per_day)
-    print("partition", partition)
 
-    grouped_pages = slice_page_counts(partition, section_page_counts)
-    print("group", grouped_pages)
+    plan = assemble_plan(partition, levels, section_titles, section_start_pages, section_page_counts)
+    # TODO Sift Algorithm
+    if debug:
+        print("levels:", levels)
+        print("section start pages:", section_start_pages)
+        print("section titles:", section_titles)
+        print("section page counts", section_page_counts)
+        print("ppd", pages_per_day)
+        print("partition", partition)
+        print(plan)
 
-    plan = []
     return pages_per_day, plan
 
 
 filename = 'ignore/soci.pdf'
 doc = fitz.open(filename)
 
-rate, plan = generate_plan(doc, 250, 5, 41, 3) #294
+rate, gen_plan = generate_plan(doc, 250, 5, 41, 3) #294
 
 
-# print("Pages/Day: " + str(rate))
-# for val in plan:
-#
-#     for item in val:
-#         for count in range(0, item[0]):
-#             print("\t", end='')
-#         print(item[2] + " [" + str(item[1]) + "; " + str(item[3]) + "p]\r")
-#     print("----------------------------------------------------------")
+print("Pages/Day: " + str(rate))
+for val in gen_plan:
+
+    for item in val:
+        for count in range(0, item[0]):
+            print("\t", end='')
+        print(item[1] + " [" + str(item[2]) + "; " + str(item[3]) + "p]\r")
+    print("----------------------------------------------------------")
