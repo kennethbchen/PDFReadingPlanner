@@ -51,67 +51,84 @@ def get_parent_tree(outline_structure, internal_start_page):
     return output
 
 
-def get_page_counts(outline_structure):
-    for val in range(0, len(outline_structure)):
-        if val > 0:
-            outline_structure[val - 1].append(outline_structure[val][1] - outline_structure[val - 1][1])
+def get_page_counts(section_pages):
+    output = []
+    for val in range(1, len(section_pages)):
+        output.append(section_pages[val] - section_pages[val - 1])
 
-    del outline_structure[-1]  # We got one extra heading in order to do page count so remove it
-    return outline_structure
+    return output
 
 
-def partition_outline(outline_structure, days):
+def partition_outline(page_counts, pages_per_day):
     output = []
     buffer = []
-    total_pages = 0
-    for item in outline_structure:
-        total_pages += item[3]
-    pages_per_day = ceil(total_pages / days)
-    count = 0
-    for item in outline_structure:
-        if (count + item[3]) <= pages_per_day:
-            count += item[3]
-            buffer.append(item)
+
+    page_tally = 0
+    section_count = 0
+    for item in page_counts:
+
+        if (page_tally + item) <= pages_per_day:
+            page_tally += item
+            section_count += 1
         else:
-            output.append(buffer)
-            buffer = [item]
-            count = item[3]
+            output.append(section_count)
+            section_count = 1
+            page_tally = item
 
-    if len(buffer) != 0:
-        output.append(buffer)
-    output = sift(output, days, pages_per_day)
-    return pages_per_day, output
+    if section_count != 1:
+        output.append(section_count)
+
+    return output
 
 
-def sift(reading_plan, days, pages_per_day):
-
-    if len(reading_plan) > days:
-        reading_plan[-2].extend(reading_plan.pop(-1))
-
-    return reading_plan
+def slice_page_counts(partition, page_counts):
+    output = []
+    for item in partition:
+        output.append(page_counts[:item])
+        del page_counts[:item]
+    return output
 
 
 def generate_plan(document, toc_start_page, days, toc_offset=0, trim_by=0):
     ol = document.outline
-    headings = get_page_counts(get_parent_tree(get_outline_structure(ol), toc_start_page + toc_offset))
-    for i in range(0, trim_by):
-        headings.pop(-1)
 
-    pages_per_day, partition = partition_outline(headings, days)
+    # Get only the headings that we want
+    headings = get_parent_tree(get_outline_structure(ol), toc_start_page + toc_offset)
+    for i in range(1, trim_by):  # Remove a certain number of the headings from the back
+        headings.pop(-1)  # TODO Check this to make sure outlines are being selected properly, chapter 8 was in headings
 
-    return pages_per_day, partition
+    levels, heading_start_pages, section_titles = zip(*headings)
+    print("levels:", levels)
+    print("section bookmarks:", heading_start_pages)
+    print("section titles:", section_titles)
+
+    section_page_counts = get_page_counts(heading_start_pages)
+    print("section page counts", section_page_counts)
+
+    pages_per_day = ceil(sum(section_page_counts) / days)
+    print("ppd", pages_per_day)
+
+    partition = partition_outline(section_page_counts, pages_per_day)
+    print("partition", partition)
+
+    grouped_pages = slice_page_counts(partition, section_page_counts)
+    print("group", grouped_pages)
+
+    plan = []
+    return pages_per_day, plan
 
 
 filename = 'ignore/soci.pdf'
 doc = fitz.open(filename)
 
-rate, plan = generate_plan(doc, 250, 5, 41, 2) #294
+rate, plan = generate_plan(doc, 250, 5, 41, 3) #294
 
-print("Pages/Day: " + str(rate))
-for val in plan:
 
-    for item in val:
-        for count in range(0, item[0]):
-            print("\t", end='')
-        print(item[2] + " [" + str(item[1]) + "; " + str(item[3]) + "p]\r")
-    print("----------------------------------------------------------")
+# print("Pages/Day: " + str(rate))
+# for val in plan:
+#
+#     for item in val:
+#         for count in range(0, item[0]):
+#             print("\t", end='')
+#         print(item[2] + " [" + str(item[1]) + "; " + str(item[3]) + "p]\r")
+#     print("----------------------------------------------------------")
