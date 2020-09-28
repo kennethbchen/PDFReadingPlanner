@@ -89,7 +89,7 @@ def partition_outline(page_counts, pages_per_day):
 #     return output
 
 
-def assemble_plan(partition, section_levels, section_titles, section_start_pages, section_page_counts):
+def assemble_output(partition, section_levels, section_titles, section_start_pages, section_page_counts):
     output = []
 
     slice_start = 0
@@ -119,7 +119,7 @@ def generate_plan(document, toc_start_page, days, toc_offset=0, trim_by=0, debug
 
     partition = partition_outline(section_page_counts, pages_per_day)
 
-    plan = assemble_plan(partition, levels, section_titles, section_start_pages, section_page_counts)
+    plan = assemble_output(partition, levels, section_titles, section_start_pages, section_page_counts)
     # TODO Sift Algorithm
     if debug:
         print("levels:", levels)
