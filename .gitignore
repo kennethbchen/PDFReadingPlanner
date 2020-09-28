@@ -3,4 +3,4 @@
 .pdf
 .docx
 /ignore
-
+__pycache__

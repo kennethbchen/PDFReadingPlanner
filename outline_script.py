@@ -144,6 +144,6 @@ for val in gen_plan:
 
     for item in val:
         for count in range(0, item[0]):
-            print("\t", end='')
+            print("  ", end='')
         print(item[1] + " [" + str(item[2]) + "; " + str(item[3]) + "p]\r")
     print("----------------------------------------------------------")
