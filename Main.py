@@ -1,102 +1,125 @@
-import fitz
-from math import ceil
+import outline_script
+import tkinter as tk
+from tkinter import *
+from tkinter import filedialog
+
+# Window / Root
+window = Tk()
+window.title("PDF Reading Planner")
 
 
-def get_outline_structure(outline, level=0):
-    """ Gets the full tree structure of an outline.
+document_path = StringVar()
+document_path_display = StringVar()
+document_path_display.set("Open File...")
 
-    :param outline: Outline Object to get the layout of
-    :param level: Prefix that shows the level of the outline. Leave blank
-
-    :rtype [level <int>, page <int>, title <str>]
-    :return: List that represents structure of the outline
-    """
-    output = []
-    while outline is not None:
-        temp = [level, outline.page, outline.title]
-        output.append(temp)
-        if outline.down is not None:
-            output.extend(get_outline_structure(outline.down, level + 1))
-        outline = outline.next
-    return output
+start_page = StringVar()
+days = StringVar()
+toc_offset = StringVar()
+trim_by = StringVar()
 
 
-def get_parent_tree(outline_structure, internal_start_page):
-    """
-    Gets the outline structure of one branch starting at a page number
-    start is the page number based on the table of contents of the PDF
-    :param outline_structure: List of the outline contents
-    :param internal_start_page: the first page of the tree you want to select
-
-    :rtype [level <int>, page <int>, title <str>]
-    :return: List that represents structure of the outline range
-    """
-
-    output = []
-    max_level = -1
-
-    for item in outline_structure:
-        if item[1] == internal_start_page - 1:
-            output.append(item)
-            max_level = item[0]
-            continue
-
-        if (item[1] >= internal_start_page) and (item[0] > max_level):
-            output.append(item)
-        elif (len(output) > 0) and (item[0] == max_level):
-            output.append(item)
-            break
-
-    return output
+def ask_for_file():
+    global document_path
+    global document_indicator
+    temp = filedialog.askopenfilename()
+    # Sets the document_path only if the output is valid. This prevents setting the document to None when it's cancelled
+    if temp is not "":
+        document_path.set(temp)
+        document_path_display.set(temp)
 
 
-def get_page_counts(outline_structure):
-    for val in range(0, len(outline_structure)):
-        if val > 0:
-            outline_structure[val - 1].append(outline_structure[val][1] - outline_structure[val - 1][1])
-
-    del outline_structure[-1]  # We got one extra heading in order to do page count so remove it
-    return outline_structure
-
-
-def partition_outline(outline_structure, days):
-    output = []
-    buffer = []
-    total_pages = 0
-    for item in outline_structure:
-        total_pages += item[3]
-    pages_per_day = ceil(total_pages / days)
-    count = 0
-    for item in outline_structure:
-        if (count + item[3]) <= pages_per_day:
-            count += item[3]
-            buffer.append(item)
-        else:
-            output.append(buffer)
-            buffer = [item]
-            count = item[3]
-
-    if len(buffer) != 0:
-        output.append(buffer)
-
-    return pages_per_day, output
+def verify_input():
+    # Checks if the document is a valid path and all of the text inputs are numbers
+    if document_path.get() is not "" and \
+            all(v for v in [start_page.get().isnumeric(), days.get().isnumeric(),
+                            toc_offset.get().isnumeric(), trim_by.get().isnumeric()]):
+        return True
+    else:
+        return False
 
 
-def generate_plan(document, toc_start_page, days, toc_offset=0, trim_by=0):
-    ol = document.outline
-    headings = get_page_counts(get_parent_tree(get_outline_structure(ol), toc_start_page + toc_offset))
-    for i in range(0,trim_by):
-        headings.pop(-1)
-
-    pages_per_day, partition = partition_outline(headings, days)
-    return pages_per_day, partition
+def print_all_vars():
+    print(document_path.get(), start_page.get(), days.get(), toc_offset.get(), trim_by.get())
 
 
-filename = 'ignore/soci.pdf'
-doc = fitz.open(filename)
+def generate_plan():
+    global output_box
+    if verify_input():
+        output_box.delete("1.0", "end")
+        output_box.insert("1.0",
+                          outline_script.generate_plan(document_path.get(), int(start_page.get()),
+                                                       int(days.get()), int(toc_offset.get()), int(trim_by.get())))
 
-rate, plan = generate_plan(doc, 250, 5, 41, 2)
 
-print(rate)
-for val in plan:
-    print(val)
+# Main Frame
+content = tk.Frame(window)
+content.grid(column=0, row=0)
+
+
+# Output
+output_box = tk.Text(content, width=75, height=30)
+output_box.grid(column=0, row=0, rowspan=6)
+
+
+# Document Parameter
+document_frame = tk.Frame(content, padx=5, pady=5)
+document_frame.grid(column=1, row=0)
+
+document_label = tk.Label(document_frame, text="Document")
+document_label.grid(column=0, row=0, columnspan=2)
+
+document_indicator = tk.Label(document_frame, justify="right", width=10, textvariable=document_path_display)
+document_indicator.grid(column=0, row=1)
+
+document_button = tk.Button(document_frame, text="Open File", command=ask_for_file)
+document_button.grid(column=1, row=1)
+
+
+# Start Page Parameter
+start_page_frame = tk.Frame(content, padx=5, pady=5)
+start_page_frame.grid(column=1, row=1)
+
+start_page_label = tk.Label(start_page_frame, text="Start Page #")
+start_page_label.grid(column=0, row=0)
+
+start_page_input = tk.Entry(start_page_frame, width=5, justify="center", textvariable=start_page)
+start_page_input.grid(column=0, row=1)
+
+
+# Days parameter
+days_frame = tk.Frame(content, padx=5, pady=5)
+days_frame.grid(column=1, row=2)
+
+days_label = tk.Label(days_frame, text="Days")
+days_label.grid(column=0, row=0)
+
+days_input = tk.Entry(days_frame, width=5, justify="center", textvariable=days)
+days_input.grid(column=0, row=1)
+
+
+# TOC Offset Parameter
+toc_offset_frame = tk.Frame(content, padx=5, pady=5)
+toc_offset_frame.grid(column=1, row=3)
+
+toc_offset_label = tk.Label(toc_offset_frame, text="TOC Offset")
+toc_offset_label.grid(column=0, row=0)
+
+toc_offset_input = tk.Entry(toc_offset_frame, width=5, justify="center", textvariable=toc_offset)
+toc_offset_input.grid(column=0, row=1)
+
+
+# Trim-By Parameter
+trim_by_frame = tk.Frame(content, padx=5, pady=5)
+trim_by_frame.grid(column=1, row=4)
+
+trim_by_label = tk.Label(trim_by_frame, text="Trim-By")
+trim_by_label.grid(column=0, row=0)
+
+trim_by_input = tk.Entry(trim_by_frame, width=5, justify="center", textvariable=trim_by)
+trim_by_input.grid(column=0, row=1)
+
+# Generate Button
+document_button = tk.Button(content, text="Generate Plan", command=generate_plan)
+document_button.grid(column=1, row=5)
+
+window.mainloop()
