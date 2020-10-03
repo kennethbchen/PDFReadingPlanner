@@ -1,6 +1,9 @@
 # Default ignored files
 /workspace.xml
-.pdf
-.docx
+*.pdf
+*.docx
+*.spec
 /ignore
 __pycache__
+/dist
+/build
