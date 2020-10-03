@@ -118,6 +118,7 @@ trim_by_label.grid(column=0, row=0)
 trim_by_input = tk.Entry(trim_by_frame, width=5, justify="center", textvariable=trim_by)
 trim_by_input.grid(column=0, row=1)
 
+
 # Generate Button
 document_button = tk.Button(content, text="Generate Plan", command=generate_plan)
 document_button.grid(column=1, row=5)
