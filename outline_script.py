@@ -103,8 +103,8 @@ def assemble_output(partition, section_levels, section_titles, section_start_pag
     return output
 
 
-def generate_plan(document, toc_start_page, days, toc_offset=0, trim_by=0, debug=False):
-    ol = document.outline
+def generate_plan(file_path, toc_start_page, days, toc_offset=0, trim_by=0, debug=False):
+    ol = fitz.open(file_path).outline
 
     # Get only the headings that we want
     headings = get_parent_tree(get_outline_structure(ol), toc_start_page + toc_offset)
@@ -130,20 +130,18 @@ def generate_plan(document, toc_start_page, days, toc_offset=0, trim_by=0, debug
         print("partition", partition)
         print(plan)
 
+    output = ""
+    print("Pages/Day: " + str(pages_per_day))
+    for val in plan:
+
+        for item in val:
+            for count in range(0, item[0]):
+                print("  ", end='')
+            print(item[1] + " [" + str(item[2]) + "; " + str(item[3]) + "p]\r")
+        print("----------------------------------------------------------")
     return pages_per_day, plan
 
 
-filename = 'ignore/soci.pdf'
-doc = fitz.open(filename)
 
-rate, gen_plan = generate_plan(doc, 250, 5, 41, 3) #294
+# rate, gen_plan = generate_plan("ignore/soci.pdf", 294, 5, 41, 3) #294
 
-
-print("Pages/Day: " + str(rate))
-for val in gen_plan:
-
-    for item in val:
-        for count in range(0, item[0]):
-            print("  ", end='')
-        print(item[1] + " [" + str(item[2]) + "; " + str(item[3]) + "p]\r")
-    print("----------------------------------------------------------")
