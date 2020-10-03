@@ -22,13 +22,14 @@ def ask_for_file():
     global document_path
     global document_indicator
     temp = filedialog.askopenfilename()
-
+    # Sets the document_path only if the output is valid. This prevents setting the document to None when it's cancelled
     if temp is not "":
         document_path.set(temp)
         document_path_display.set(temp)
 
 
 def verify_input():
+    # Checks if the document is a valid path and all of the text inputs are numbers
     if document_path.get() is not "" and \
             all(v for v in [start_page.get().isnumeric(), days.get().isnumeric(),
                             toc_offset.get().isnumeric(), trim_by.get().isnumeric()]):
@@ -37,15 +38,18 @@ def verify_input():
         return False
 
 
-def print_all():
+def print_all_vars():
     print(document_path.get(), start_page.get(), days.get(), toc_offset.get(), trim_by.get())
 
+
 def generate_plan():
+    global output_box
     if verify_input():
-        outline_script.generate_plan(document_path.get(), int(start_page.get()),
-                                     int(days.get()), int(toc_offset.get()), int(trim_by.get()))
-    else:
-        print("uh uh")
+        output_box.delete("1.0", "end")
+        output_box.insert("1.0",
+                          outline_script.generate_plan(document_path.get(), int(start_page.get()),
+                                                       int(days.get()), int(toc_offset.get()), int(trim_by.get())))
+
 
 # Main Frame
 content = tk.Frame(window)
@@ -53,7 +57,7 @@ content.grid(column=0, row=0)
 
 
 # Output
-output_box = tk.Text(content, width=50, height=25)
+output_box = tk.Text(content, width=75, height=30)
 output_box.grid(column=0, row=0, rowspan=6)
 
 

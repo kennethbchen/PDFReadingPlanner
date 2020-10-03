@@ -4,7 +4,7 @@ import tkinter
 
 
 def get_outline_structure(outline, level=0):
-    """ Gets the full tree structure of an outline.
+    """ Gets the full structure of an outline.
 
     :param outline: Outline Object to get the layout of
     :param level: Prefix that shows the level of the outline. Leave blank
@@ -78,15 +78,9 @@ def partition_outline(page_counts, pages_per_day):
     if section_count != 1:
         output.append(section_count)
 
+    # The partition is just a list with numbers representing how many sections to read goes in that group.
+    # For example [4,5] means that in a list of all the sections, the first four go in group 1 and the rest in group 2
     return output
-
-
-# def slice_page_counts(partition, page_counts): TODO Fix this
-#     output = []
-#     for item in partition:
-#         output.append(page_counts[:item])
-#         del page_counts[:item]
-#     return output
 
 
 def assemble_output(partition, section_levels, section_titles, section_start_pages, section_page_counts):
@@ -108,9 +102,11 @@ def generate_plan(file_path, toc_start_page, days, toc_offset=0, trim_by=0, debu
 
     # Get only the headings that we want
     headings = get_parent_tree(get_outline_structure(ol), toc_start_page + toc_offset)
-    for i in range(1, trim_by):  # Remove a certain number of the headings from the back
-        headings.pop(-1)  # TODO Check this to make sure outlines are being selected properly, chapter 8 was in headings
 
+    for i in range(0, trim_by):  # Remove a certain number of the headings from the back
+        headings.pop(-1)
+
+    # Separate headings into three lists
     levels, section_start_pages, section_titles = zip(*headings)
 
     section_page_counts = get_page_counts(section_start_pages)
@@ -130,18 +126,24 @@ def generate_plan(file_path, toc_start_page, days, toc_offset=0, trim_by=0, debu
         print("partition", partition)
         print(plan)
 
+        print("Pages/Day: " + str(pages_per_day))
+        for val in plan:
+
+            for item in val:
+                for count in range(0, item[0]):
+                    print("  ", end='')
+                print(item[1] + " [" + str(item[2]) + "; " + str(item[3]) + "p]\n")
+            print("----------------------------------------------------------")
+
     output = ""
-    print("Pages/Day: " + str(pages_per_day))
+    output += "Pages/Day: " + str(pages_per_day) + "\n"
     for val in plan:
 
         for item in val:
             for count in range(0, item[0]):
-                print("  ", end='')
-            print(item[1] + " [" + str(item[2]) + "; " + str(item[3]) + "p]\r")
-        print("----------------------------------------------------------")
-    return pages_per_day, plan
+                output += "  "
+            output += item[1] + " [" + str(item[2]) + "; " + str(item[3]) + "p]\n"
+        output += "----------------------------------------------------------\n"
+    return output
 
-
-
-# rate, gen_plan = generate_plan("ignore/soci.pdf", 294, 5, 41, 3) #294
 
